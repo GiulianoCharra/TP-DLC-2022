@@ -4,10 +4,9 @@ package org.utn.dlc.dominio;
 import org.utn.dlc.persistencia.PDocumento;
 
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Hashtable;
 
-public class Documento {
+public class Documento{
 
     private int idDocumento;
     private String nombre;
@@ -36,8 +35,12 @@ public class Documento {
         PDocumento.insertarDocumento(documento);
     }
 
-    public static void actualizarDocumento(Documento documento) {
-        PDocumento.actualizarDocumento(documento);
+    public static void actualizarFechaDocumento(Documento documento) {
+        actualizarFechaDocumento(documento.getIdDocumento());
+    }
+
+    public static void actualizarFechaDocumento(int idDocumento, Date fechaUltimaActualizacion) {
+        PDocumento.actualizarDocumento(idDocumento);
     }
 
     public int getIdDocumento() {
@@ -76,9 +79,20 @@ public class Documento {
         return PDocumento.buscarByIdDocumento(idDocumento);
     }
 
+
+    public boolean esActualizado(Documento documento) {
+        return esActualizado(documento.getFechaHoraActualizacion());
+    }
+
+    public boolean esActualizado(Date fechaHora) {
+        return this.fechaHoraActualizacion != fechaHora;
+    }
+
     @Override
     public String toString() {
-        return "nombre: '" + nombre + '\'' +
-                ", path: '" + path;
+        return  "idDocumento: " + idDocumento +
+                ", nombre: '" + nombre + '\'' +
+                ", path: '" + path + '\'' +
+                ", fechaHoraActualizacion: " + fechaHoraActualizacion;
     }
 }

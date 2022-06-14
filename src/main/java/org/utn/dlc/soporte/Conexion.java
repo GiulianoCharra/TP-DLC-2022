@@ -641,7 +641,8 @@ public class Conexion {
             String qGroupBy,
             String qHaving,
             String qOrderBy,
-            int qLimit, int qOffset) {
+            int qLimit,
+            int qOffset) {
 
         qSelect = String.format("SELECT %s", qSelect);
 

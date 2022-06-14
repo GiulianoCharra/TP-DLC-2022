@@ -17,7 +17,33 @@ public abstract class PDocumento {
     public static final String DOCUMENTO_FECHA_HORA_ACTUALIZACION = "fechaHoraActualizacion";
 
     public static Documento buscarByIdDocumento(int idDocumento) {
-        return null;
+
+        Documento documento = null;
+        try {
+            Conexion con = new Conexion(Conexion.SQLSERVER_DRIVER_NAME);
+
+            con.connect();
+            String query = Conexion.buildSelectQuery(
+                    "*",
+                    "Documento",
+                    String.format(" %s", DOCUMENTO_ID_DOCUMENTO + "=" + idDocumento),
+                    null,
+                    null,
+                    null
+            );
+
+            con.prepareQuery(query);
+
+            ResultSet rs = con.executeQuery(query);
+            documento = buildDocumento(rs);
+
+            rs.close();
+            con.close();
+        }catch (Exception e){
+            System.out.println(e);
+        }
+
+        return documento;
     }
 
     protected static Hashtable<Integer, Documento> buildDocumentos(ResultSet rs) throws Exception {
@@ -57,7 +83,7 @@ public abstract class PDocumento {
         con.connect();
         String query = Conexion.buildSelectQuery(
                 "*",
-                "v_alumno",
+                "Documento",
                 null,
                 null,
                 null,

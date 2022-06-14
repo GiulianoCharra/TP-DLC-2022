@@ -36,23 +36,10 @@ public class App extends Application {
         return fxmlLoader.load();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
 
-        Runnable indexador = () -> {
-            try {
-                String ruta = cargarRuta();
-                if (ruta != null)
-                    Indexador.indexar(ruta);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        };
-        Runnable buscador = () -> {
-            launch();
-        };
-
-        buscador.run();
-        indexador.run();
+        String ruta = cargarRuta();
+        Indexador.indexar(ruta);
 
         //launch();
     }

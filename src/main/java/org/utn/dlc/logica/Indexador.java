@@ -13,8 +13,6 @@ public abstract class Indexador implements Runnable {
 
 
     private static Hashtable<Integer, Documento> documentos = new Hashtable<>();
-    //La variable contiene los documentos que ya se encontraban guardados
-    private static Hashtable<Integer, Documento> documentosGuardados = new Hashtable<>();
     //La variable contiene todo el vocavulario hasta el momento
     private static Hashtable<Integer,Vocabulario> vocabulario = new Hashtable<>();
     //La variable controla las palabras del documento que se esta leyendo en ese momento
@@ -28,7 +26,8 @@ public abstract class Indexador implements Runnable {
      */
     public static void indexar(String ruta) throws Exception {
 
-        //documentosGuardados = Documento.buscarAllDocumentos();
+        //Se carga en memoria todos los documento
+        documentos = Documento.buscarAllDocumentos();
 
         Documento documento;
 
@@ -42,7 +41,7 @@ public abstract class Indexador implements Runnable {
 
         //Se crea una bandera para controlar si se realziar un INSERT o un UPDATE
         //por defecto se es false se realiza un INSERT
-        boolean actualizarDocumento = false;
+        //boolean actualizarDocumento = false;
 
         //Recorre cada documento ".txt" de la carpeta
         for (File file: Objects.requireNonNull(carpeta.listFiles((File pathname) -> pathname.getName().endsWith(".txt")))){
@@ -51,37 +50,33 @@ public abstract class Indexador implements Runnable {
             vocabularioAux = new Hashtable<>();
             vocabularioParaActializar = new Hashtable<>();
 
+            //seteo las variable con los datos del archivo actua
             nombre = file.getName();
             idDocumento = nombre.hashCode();
             path = file.getPath();
             fechaUltimaActualizacion = new Date(file.lastModified());
 
-            //Verifica si el documento ya se encuentra guardado
-            if (documentosGuardados.contains(nombre)) {
+            //Verifica si el documento ya se encuentra
+            documento = documentos.get(idDocumento);
+            if (documento != null) {
 
-                //Verifica si el documento guardado fue actualizado y fue asi se cambia la variable
-                if (documentosGuardados.get(idDocumento).getFechaHoraActualizacion() != fechaUltimaActualizacion) {
+                //Verifica si el documento guardado fue actualizado y fue asi se actualiza la fecha
+                //y si no lo fue se salta al proximo documento
+                if (documento.esActualizado(fechaUltimaActualizacion)) {
 
-                    //Como el archivo ya se encontraba se creaa una intancia con los datos guardados
-                    documento = documentos.get(idDocumento);
-
-                    //Se cambia la variable de control para realizar un UPDATE
-                    actualizarDocumento = true;
+                    //Como el archivo ya se encontraba se actualiza
+                    documento.setFechaHoraActualizacion(fechaUltimaActualizacion);
+                    Documento.actualizarFechaDocumento(idDocumento, fechaUltimaActualizacion);
                 }
                 else
                     continue;
             }
             else{
-                //Se crea una Instancia de Documento con los datos del archivo que se esta leyendo
-                documento = new Documento(nombre, path, fechaUltimaActualizacion);
-            }
-
-            //Si el documento ya se encontraba se actualiza y si no lo estaba se agrega
-            if (!actualizarDocumento) {
-                documentos.put(documento.getIdDocumento(), documento);
-            }
-            else {
-                documentos.get(idDocumento).setFechaHoraActualizacion(fechaUltimaActualizacion);
+                //Como el documento no se encontraba se crea un documento con los
+                //datos del archivo que se esta leyedo, lo agrego al vector y lo guarda en la DB
+                documento = new Documento(idDocumento, nombre, path, fechaUltimaActualizacion);
+                documentos.put(idDocumento, documento);
+                Documento.insertarDocumento(documento);
             }
 
             //Se crea un Scanner que nos permitira leer el documento actual
@@ -132,7 +127,7 @@ public abstract class Indexador implements Runnable {
             }
 
             if (actualizarDocumento) {
-                Documento.actualizarDocumento(documento);
+                Documento.actualizarFechaDocumento(documento);
                 actualizarDocumento = false;
             }else {
                 Documento.insertarDocumento(documento);
