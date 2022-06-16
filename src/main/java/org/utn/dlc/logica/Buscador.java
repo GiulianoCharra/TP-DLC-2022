@@ -3,7 +3,6 @@ package org.utn.dlc.logica;
 import org.utn.dlc.dominio.Documento;
 import org.utn.dlc.dominio.Posteo;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 public abstract class Buscador {

@@ -4,6 +4,7 @@ import org.utn.dlc.persistencia.PPosteo;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Hashtable;
 
 public class Posteo {
 
@@ -12,7 +13,7 @@ public class Posteo {
     private int frecuencia;
     private double peso;
 
-    public Posteo(int idVocabulario, int idDocumento, int frecuencia, int peso){
+    public Posteo(int idVocabulario, int idDocumento, int frecuencia, int peso) {
         this(Vocabulario.buscarByIdPalabra(idVocabulario), Documento.buscarByIdDocumento(idDocumento), frecuencia, peso);
     }
 
@@ -37,6 +38,11 @@ public class Posteo {
     }
 
     public static void insertarPosteo(HashSet<Posteo> posteos) {
+        PPosteo.insertPosteos(posteos);
+    }
+
+    public static void actualizarPosteos(HashSet<Posteo> posteos, Documento documentoActual, Hashtable<Integer, Vocabulario> vocabularioParaActualizar) {
+        PPosteo.updatePosteos(posteos, documentoActual.getIdDocumento(), vocabularioParaActualizar);
     }
 
     public Vocabulario getPalabra() {
@@ -71,24 +77,24 @@ public class Posteo {
         this.peso = peso;
     }
 
-    public void calcularPeso(int N, int n){
+    public void calcularPeso(int N, int n) {
 
-        this.peso = ((this.frecuencia * Math.log((double) N/n))/(Math.sqrt(Math.pow(suma(N, n), 2))));
+        this.peso = ((this.frecuencia * Math.log((double) N / n)) / (Math.sqrt(Math.pow(suma(N, n), 2))));
     }
 
-    public double suma(int N, int n){
-        return frecuencia * Math.log((double) N/n);
+    public double suma(int N, int n) {
+        return frecuencia * Math.log((double) N / n);
     }
 
-    public static Posteo buscarByIdVocabulario(int idVocabulario){
-         return PPosteo.buscarByIdVocabulario(idVocabulario);
+    public static Posteo buscarByIdVocabulario(int idVocabulario) {
+        return PPosteo.buscarByIdVocabulario(idVocabulario);
     }
 
     @Override
     public String toString() {
-        return  "vocabulario: " + palabra.getPalabra() +
+        return "vocabulario: " + palabra.getPalabra() +
                 ", documento: " + documento.getNombre() +
                 ", frecuencia: " + frecuencia +
-                ", peso: " + peso ;
+                ", peso: " + peso;
     }
 }

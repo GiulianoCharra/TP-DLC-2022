@@ -1,13 +1,5 @@
 package org.utn.dlc;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -26,6 +18,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.utn.dlc.dominio.Documento;
 import org.utn.dlc.logica.Buscador;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.ResourceBundle;
 
 public class BuscadorController implements Initializable {
 
@@ -54,7 +52,7 @@ public class BuscadorController implements Initializable {
             return;
         String[] palabras = txt_texto_ingresado.getText().split(" ");
 
-        resultados =  Buscador.buscar(palabras);
+        resultados = Buscador.buscar(palabras);
 
         resultados.forEach(documento -> {
             try {

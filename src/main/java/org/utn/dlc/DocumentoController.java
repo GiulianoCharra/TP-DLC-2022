@@ -1,14 +1,14 @@
 package org.utn.dlc;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ResourceBundle;
-
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import org.utn.dlc.dominio.Documento;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.ResourceBundle;
 
 public class DocumentoController implements Initializable {
 
@@ -33,8 +33,8 @@ public class DocumentoController implements Initializable {
         App.setRoot("primary");
     }
 
-    public void cargar(Documento documento){
-            this.documento = documento;
-            lbl_nombre_documento.setText(documento.getNombre());
+    public void cargar(Documento documento) {
+        this.documento = documento;
+        lbl_nombre_documento.setText(documento.getNombre());
     }
 }

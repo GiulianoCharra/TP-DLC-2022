@@ -7,6 +7,7 @@ import org.utn.dlc.dominio.Vocabulario;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.*;
 
 public abstract class Indexador implements Runnable {
@@ -14,22 +15,25 @@ public abstract class Indexador implements Runnable {
 
     private static Hashtable<Integer, Documento> documentos = new Hashtable<>();
     //La variable contiene todo el vocavulario hasta el momento
-    private static Hashtable<Integer,Vocabulario> vocabulario = new Hashtable<>();
+    private static Hashtable<Integer, Vocabulario> vocabulario = new Hashtable<>();
     //La variable controla las palabras del documento que se esta leyendo en ese momento
-    private static Hashtable<Integer, Vocabulario> vocabularioAux;
-    private static Hashtable<Integer, Vocabulario> vocabularioParaActializar;
-    private static HashSet<Posteo> posteos = new HashSet<>();
+    private static Hashtable<Integer, Vocabulario> vocabularioDocActual;
+    private static Hashtable<Integer, Vocabulario> vocabularioParaActualizar;
+    private static Hashtable<Integer, Vocabulario> vocabularioParaInsertar;
+    private static HashSet<Posteo> posteos;
+    private static Documento documentoActual;
 
     /**
      * Comienza la indexacion de los archivos
+     *
      * @throws FileNotFoundException
      */
     public static void indexar(String ruta) throws Exception {
 
-        //Se carga en memoria todos los documento
-        documentos = Documento.buscarAllDocumentos();
-
-        Documento documento;
+        //Se carga en memoria todos los documentos que ya es encuentra guardado
+        documentos = Documento.findAllDocuments();
+        //Se carga en memoria todo el vocabulario que ya es encuentra guardado
+        vocabulario = Vocabulario.findAllWords();
 
         Scanner scanDocumentoActual;
         File carpeta = new File(ruta);
@@ -37,129 +41,135 @@ public abstract class Indexador implements Runnable {
         String nombre;
         int idDocumento;
         String path;
-        Date fechaUltimaActualizacion;
-
-        //Se crea una bandera para controlar si se realziar un INSERT o un UPDATE
-        //por defecto se es false se realiza un INSERT
-        //boolean actualizarDocumento = false;
-
+        Timestamp fechaUltimaActualizacion;
         //Recorre cada documento ".txt" de la carpeta
-        for (File file: Objects.requireNonNull(carpeta.listFiles((File pathname) -> pathname.getName().endsWith(".txt")))){
+        for (File file : Objects.requireNonNull(carpeta.listFiles((File pathname) -> pathname.getName().endsWith(".txt")))) {
 
             //Reinicio la variable
-            vocabularioAux = new Hashtable<>();
-            vocabularioParaActializar = new Hashtable<>();
+            vocabularioDocActual = new Hashtable<>();
+            vocabularioParaActualizar = new Hashtable<>();
+            vocabularioParaInsertar = new Hashtable<>();
+            posteos = new HashSet<>();
+            documentoActual = null;
 
-            //seteo las variable con los datos del archivo actua
+            //seteo las variable con los datos del archivo actual
             nombre = file.getName();
             idDocumento = nombre.hashCode();
             path = file.getPath();
-            fechaUltimaActualizacion = new Date(file.lastModified());
+            fechaUltimaActualizacion = new Timestamp(file.lastModified());
 
-            //Verifica si el documento ya se encuentra
-            documento = documentos.get(idDocumento);
-            if (documento != null) {
+            System.out.println(nombre);
 
-                //Verifica si el documento guardado fue actualizado y fue asi se actualiza la fecha
+            //Verifica si el documentoActual ya se encuentra y si no lo esta se guarda
+            documentoActual = documentos.get(idDocumento);
+            if (documentoActual != null) {
+                long fecha = documentoActual.getFechaHoraActualizacion().getTime();
+                long fechaAux = fechaUltimaActualizacion.getTime();
+                //Verifica si el documentoActual guardado fue actualizado y si fue asi se actualiza la fecha
                 //y si no lo fue se salta al proximo documento
-                if (documento.esActualizado(fechaUltimaActualizacion)) {
+                if (fecha != fechaAux) {
 
-                    //Como el archivo ya se encontraba se actualiza
-                    documento.setFechaHoraActualizacion(fechaUltimaActualizacion);
+                    //Como el documentoActual guardado al parece fue actualizado se tiene que actualizar
+                    documentoActual.setFechaHoraActualizacion(fechaUltimaActualizacion);
                     Documento.actualizarFechaDocumento(idDocumento, fechaUltimaActualizacion);
-                }
-                else
+                } else{
                     continue;
-            }
-            else{
-                //Como el documento no se encontraba se crea un documento con los
+                }
+            } else {
+                //Como el documentoActual no se encontraba se crea un documentoActual con los
                 //datos del archivo que se esta leyedo, lo agrego al vector y lo guarda en la DB
-                documento = new Documento(idDocumento, nombre, path, fechaUltimaActualizacion);
-                documentos.put(idDocumento, documento);
-                Documento.insertarDocumento(documento);
+                documentoActual = new Documento(idDocumento, nombre, path, fechaUltimaActualizacion);
+                documentos.put(idDocumento, documentoActual);
+                Documento.insertarDocumento(documentoActual);
             }
 
             //Se crea un Scanner que nos permitira leer el documento actual
             scanDocumentoActual = new Scanner(file, StandardCharsets.ISO_8859_1);
 
-            //Recorre cada palabra del documento y lo agrega al Vocabulario auxiliar y en caso de ya encontrarse
+            //Recorre cada palabra del documentoActual y lo agrega al Vocabulario auxiliar y en caso de ya encontrarse
             //se le suma 1 a la cantidad
             recorrerPalabras(scanDocumentoActual);
 
-            //Aca se controla si los terminos indexados en el documento ya se encontraban en el vocabulario y si lo
-            //estaban se guada el de mayor frecuencia
-            if (!vocabulario.isEmpty()) {
-                int maxFrecPalabra;
-                int maxFrecPalabraAux;
+            //Aca se controla si los terminos indexados en el documentoActual ya se encontraban en el vocabulario y si lo
+            //estaban se guarda el de mayor frecuencia
+            verificarExistenciaPalabra();
 
-                //Recorro del vocabulario auxiliar palabra por palabras
-                for (Vocabulario palabraAux : vocabularioAux.values()) {
-
-                    //Busca el id de la palabra
-                    int idPalabra = palabraAux.getIdPalabra();
-
-                    //Busca si la parala ya se encuentra en el vocabulario y si esta se guarda la palabra
-                    // y si no esta sera NULL
-                    Vocabulario palabra = vocabulario.get(idPalabra);
-
-                    if (palabra != null) {
-                        palabra.increaseCantDoc();
-
-                        maxFrecPalabraAux = palabraAux.getMaxFrecuenciaPalabra();
-                        maxFrecPalabra = palabra.getMaxFrecuenciaPalabra();
-
-                        if (maxFrecPalabra < maxFrecPalabraAux) {
-                            palabra.setMaxFrecuenciaPalabra(maxFrecPalabraAux);
-                        }
-
-                        vocabularioParaActializar.put(palabra.getIdPalabra(), palabra);
-
-                        //Se agrega un posteo de la palabra y documento actual asi como la frecuencia
-                        //de la palabra en este
-                        posteos.add(new Posteo(palabra, documento, maxFrecPalabraAux));
-
-                    } else {
-                        vocabulario.put(idPalabra, palabraAux);
-                    }
-                }
-            } else {
-                vocabulario = new Hashtable<>(vocabularioAux);
+            if (vocabularioParaActualizar.size() > 0) {
+                Vocabulario.actualizarPalabra(vocabularioParaActualizar);
+                //Posteo.actualizarPosteos(posteos, documentoActual, vocabularioParaActualizar);
             }
-
-            if (actualizarDocumento) {
-                Documento.actualizarFechaDocumento(documento);
-                actualizarDocumento = false;
-            }else {
-                Documento.insertarDocumento(documento);
-            }
-
-            Vocabulario.insertarPalabra(vocabulario);
-            Vocabulario.actualizarPalabra(vocabularioParaActializar);
+            Vocabulario.insertarPalabras(vocabularioParaInsertar);
             Posteo.insertarPosteo(posteos);
         }
+    }
+
+    public static void verificarExistenciaDocumento() {
+
     }
 
     /**
      * Recive un scanner el cual se recorrera palabra por palabra y las ira agregando o acutualizando la cantidad
      * si este ya se encontraba
+     *
      * @param scan Scanner del Archivo a leer
      */
-    private static void recorrerPalabras(Scanner scan){
+    private static void recorrerPalabras(Scanner scan) {
         String palabra;
+        System.out.println("Inicio");
         while (scan.hasNext()) {
 
             //Guardo la proxima palabra, previamente convirtiendola en minuscula
             palabra = scan.next().toLowerCase();
-
             //Obtengo el hashcode de la palabra actual
             int idPalabra = palabra.hashCode();
 
             //Pregunta si la palabra ya se encuentra y si lo esta, se aumenta su frecuencia y si no, la agrega
-            if (vocabularioAux.containsKey(idPalabra)) {
-                vocabularioAux.get(idPalabra).increaseMaxFrec();
+            if (vocabularioDocActual.containsKey(idPalabra)) {
+                vocabularioDocActual.get(idPalabra).increaseMaxFrec();
             } else {
-                vocabularioAux.put(idPalabra, new Vocabulario(palabra));
+                vocabularioDocActual.put(idPalabra, new Vocabulario(palabra));
             }
+        }
+        System.out.println("fin");
+    }
+
+    public static void verificarExistenciaPalabra() {
+        /*if (!vocabulario.isEmpty()) {
+
+        } else {
+            vocabulario = new Hashtable<>(vocabularioDocActual);
+            vocabularioParaInsertar = new Hashtable<>(vocabulario);
+        }*/
+
+        int maxFrecPalabra;
+        int maxFrecPalabraAux;
+
+        //Recorro el vocabulario auxiliar palabra por palabras
+        for (Vocabulario palabraAux : vocabularioDocActual.values()) {
+
+            //Busca el id de la palabra
+            int idPalabra = palabraAux.getIdPalabra();
+
+            //Busca si la palabra ya se encuentra en el vocabulario, si lo esta se verifica la frecuencia
+            // y si no se encuentra se guarda
+            Vocabulario palabra = vocabulario.get(idPalabra);
+            if (palabra != null) {
+                palabra.increaseCantDoc();
+
+                maxFrecPalabraAux = palabraAux.getMaxFrecuenciaPalabra();
+                maxFrecPalabra = palabra.getMaxFrecuenciaPalabra();
+
+                if (maxFrecPalabra < maxFrecPalabraAux) {
+                    palabra.setMaxFrecuenciaPalabra(maxFrecPalabraAux);
+                    vocabularioParaActualizar.put(idPalabra, palabra);
+                }
+            } else {
+                vocabulario.put(idPalabra, palabraAux);
+                vocabularioParaInsertar.put(idPalabra, palabraAux);
+            }
+            //Se agrega un posteo de la palabra y documento actual asi como la frecuencia
+            //de la palabra en este
+            posteos.add(new Posteo(palabraAux, documentoActual, palabraAux.getMaxFrecuenciaPalabra()));
         }
     }
 
@@ -176,7 +186,7 @@ public abstract class Indexador implements Runnable {
     }
 
 
-    public boolean checkChanges(){
+    public boolean checkChanges() {
         return true;
     }
 

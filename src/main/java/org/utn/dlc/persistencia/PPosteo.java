@@ -1,11 +1,16 @@
 package org.utn.dlc.persistencia;
 
-import org.utn.dlc.dominio.Documento;
 import org.utn.dlc.dominio.Posteo;
+import org.utn.dlc.dominio.Vocabulario;
 import org.utn.dlc.soporte.Conexion;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 
 public abstract class PPosteo {
@@ -64,7 +69,7 @@ public abstract class PPosteo {
                 ids == null ? null : String.format("%s IN (?)", PPosteo.POSTEO_ID_VOCABULARIO),
                 null,
                 null,
-                String.format("%s, %s",  PPosteo.POSTEO_ID_VOCABULARIO, PPosteo.POSTEO_ID_DOCUMENTO),
+                String.format("%s, %s", PPosteo.POSTEO_ID_VOCABULARIO, PPosteo.POSTEO_ID_DOCUMENTO),
                 limit,
                 offset
         );
@@ -129,5 +134,73 @@ public abstract class PPosteo {
 
     public static Posteo buscarByIdVocabulario(int idVocabulario) {
         return null;
+    }
+
+    public static void updatePosteos(HashSet<Posteo> posteos, int idDocumento, Hashtable<Integer, Vocabulario> vocabulario) {
+        try {
+            Class.forName(Conexion.SQLSERVER_DRIVER_NAME);
+            Connection con = DriverManager.getConnection(Conexion.URL, Conexion.USER, Conexion.PASS);
+
+            String query = "UPDATE [dbo].[Posteo] " +
+                    "SET [frecPalabra] = ?, [peso] = ? " +
+                    "WHERE [idVocabulario]=? and ,[idDocumento] = ?";
+
+            PreparedStatement pstmt = con.prepareStatement(query);
+            for (Vocabulario v : vocabulario.values()) {
+                pstmt.setInt(1, v.getMaxFrecuenciaPalabra());
+                double peso = 0;
+                for (Posteo p : posteos) {
+                    if (p.getPalabra().equals(v)) {
+                        peso = p.getPeso();
+                    }
+                }
+                pstmt.setFloat(2, (float) peso);
+                pstmt.setInt(3, v.getIdPalabra());
+                pstmt.setInt(4, idDocumento);
+                pstmt.addBatch();
+            }
+
+            pstmt.executeBatch();
+
+            pstmt.close();
+            con.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void insertPosteos(HashSet<Posteo> posteos) {
+        try {
+            Class.forName(Conexion.SQLSERVER_DRIVER_NAME);
+            Connection con = DriverManager.getConnection(Conexion.URL, Conexion.USER, Conexion.PASS);
+
+            String query = "INSERT INTO [dbo].[Posteo](" +
+                    "[idVocabulario]," +
+                    "[idDocumento]," +
+                    "[frecPalabra]," +
+                    "[peso])" +
+                    "VALUES " +
+                    "(?,?,?,?)";
+
+            PreparedStatement pstmt = con.prepareStatement(query);
+            posteos.forEach(p -> {
+                try {
+                    pstmt.setInt(1, p.getPalabra().getIdPalabra());
+                    pstmt.setInt(2, p.getDocumento().getIdDocumento());
+                    pstmt.setInt(3, p.getFrecuencia());
+                    pstmt.setFloat(4, (float) p.getPeso());
+                    pstmt.addBatch();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+            pstmt.executeBatch();
+
+            pstmt.close();
+            con.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

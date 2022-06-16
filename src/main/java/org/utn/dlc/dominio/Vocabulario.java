@@ -26,10 +26,16 @@ public class Vocabulario {
         this.maxFrecuenciaPalabra = maxFrecuenciaPalabra;
     }
 
-    public static void insertarPalabra(Hashtable<Integer, Vocabulario> vocabulario) {
+    public static void insertarPalabras(Hashtable<Integer, Vocabulario> vocabulario) {
+        PVocabulario.insertWors(vocabulario);
     }
 
-    public static void actualizarPalabra(Hashtable<Integer, Vocabulario> vocabularioParaActializar) {
+    public static void actualizarPalabra(Hashtable<Integer, Vocabulario> vocabulario) {
+        PVocabulario.updateWords(vocabulario);
+    }
+
+    public static Hashtable<Integer, Vocabulario> findAllWords() {
+        return PVocabulario.findAllWords();
     }
 
     public int getIdPalabra() {
@@ -64,22 +70,22 @@ public class Vocabulario {
         this.maxFrecuenciaPalabra = maxFrecuenciaPalabra;
     }
 
-    public void increaseCantDoc(){
+    public void increaseCantDoc() {
         this.cantDocumentos++;
     }
 
-    public void increaseMaxFrec(){
+    public void increaseMaxFrec() {
         this.maxFrecuenciaPalabra++;
     }
 
 
     public static Vocabulario buscarByIdPalabra(int idPalabra) {
-        return  PVocabulario.buscarByIdPalabra(idPalabra);
+        return PVocabulario.buscarByIdPalabra(idPalabra);
     }
 
     @Override
     public String toString() {
-        return  "palabra: '" + palabra + '\'' +
+        return "palabra: '" + palabra + '\'' +
                 ", cantDocumentos: " + cantDocumentos +
                 ", maxFrecuenciaPalabra: " + maxFrecuenciaPalabra;
     }

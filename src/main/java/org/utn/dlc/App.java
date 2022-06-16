@@ -1,7 +1,6 @@
 package org.utn.dlc;
 
 import javafx.application.Application;
-import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -37,25 +36,24 @@ public class App extends Application {
     }
 
     public static void main(String[] args) throws Exception {
-
-        String ruta = cargarRuta();
+        String ruta = Objects.requireNonNull(App.class.getResource("documentos")).toURI().getPath();
         Indexador.indexar(ruta);
-
-        //launch();
+        launch();
     }
 
     /**
      * Abre una ventana donde se solicita que se seleccione una carpeta
+     *
      * @return devuelve la ruta del directorio seleccionado
      */
-    public static String cargarRuta(){
+    public static String cargarRuta() {
 
         JFileChooser directoryChooser = new JFileChooser();
         directoryChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         directoryChooser.showOpenDialog(directoryChooser);
         File f = directoryChooser.getSelectedFile();
-        return f == null ? null: String.valueOf(f);
+        return f == null ? null : String.valueOf(f);
     }
 
 }

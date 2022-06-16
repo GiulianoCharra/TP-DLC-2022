@@ -22,8 +22,12 @@ public class Conexion {
     private DBConnectionMode connectionMode;
 
     private String driverName;
-    private String usr = "";
-    private String pwd = "";
+    public static final String USER = "dlc";
+    public static final String PASS = "123";
+    public static final String URL = "jdbc:sqlserver://localhost\\CHONGOPC:1433;database=TP-DLC";
+
+    private String usr = "dlc";
+    private String pwd = "123";
     private String url = "jdbc:sqlserver://localhost\\CHONGOPC:1433;database=TP-DLC";
 
     private String resourceName;
@@ -37,35 +41,37 @@ public class Conexion {
 
     private final HashMap<String, PreparedStatement> STATEMENTS;
 
-    public Connection conectar() throws SQLException, ClassNotFoundException {
-        Class.forName(SQLSERVER_DRIVER_NAME);
-        return DriverManager.getConnection(url);
+    public Conexion conectar() throws Exception {
+        if (cn == null) {
+            cn = getNewConnection();
+        }
+        return this;
     }
 
-    public ResultSet executeStatement(String query) throws SQLException, ClassNotFoundException {
-        Connection c = conectar();
-        Statement st = c.createStatement();
-        ResultSet rs = st.executeQuery(query);
+    /* public ResultSet executeStatement(String query) throws SQLException, ClassNotFoundException {
+         Connection c = conectar();
+         Statement st = c.createStatement();
+         ResultSet rs = st.executeQuery(query);
 
-        close(rs);
-        close(st);
-        close(c);
+         close(rs);
+         close(st);
+         close(c);
 
-        return rs;
-    }
+         return rs;
+     }
 
-    public ResultSet executePrepareStatement(String query) throws SQLException, ClassNotFoundException {
-        Connection c = conectar();
-        PreparedStatement pst = c.prepareStatement(query);
-        ResultSet rs = pst.executeQuery(query);
+     public ResultSet executePrepareStatement(String query) throws SQLException, ClassNotFoundException {
+         Conexion c = conectar();
+         PreparedStatement pst = c.prepareStatement(query);
+         ResultSet rs = pst.executeQuery(query);
 
-        close(rs);
-        close(pst);
-        close(c);
+         close(rs);
+         close(pst);
+         close(c);
 
-        return rs;
-    }
-
+         return rs;
+     }
+ */
     public void close(Connection c) throws SQLException {
         c.close();
     }
@@ -106,7 +112,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @return
      */
     public DBConnectionMode getConnectionMode() {
@@ -114,7 +119,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @param connectionMode
      */
     public void setConnectionMode(DBConnectionMode connectionMode) {
@@ -122,7 +126,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @return
      */
     public String getDriverName() {
@@ -130,7 +133,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @param driverName
      */
     public void setDriverName(String driverName) {
@@ -138,7 +140,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @return
      */
     public String getUrl() {
@@ -146,7 +147,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @param url
      */
     public void setUrl(String url) {
@@ -154,7 +154,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @return
      */
     public String getUserName() {
@@ -162,7 +161,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @param usr
      */
     public void setUserName(String usr) {
@@ -170,7 +168,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @return
      */
     public String getPassword() {
@@ -178,7 +175,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @param pwd
      */
     public void setPassword(String pwd) {
@@ -186,7 +182,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @return
      */
     public String getResourceName() {
@@ -194,7 +189,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @param resourceName
      */
     public void setResourceName(String resourceName) {
@@ -202,7 +196,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @throws Exception
      */
     private void setContext() throws Exception {
@@ -216,7 +209,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @throws Exception
      */
     public Conexion connect() throws Exception {
@@ -288,7 +280,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @throws Exception
      */
     public void reconnect() throws Exception {
@@ -299,7 +290,6 @@ public class Conexion {
     }
 
     /**
-     *
      * @return @throws Exception
      */
     public Connection getNewConnection() throws Exception {
@@ -361,6 +351,21 @@ public class Conexion {
     }
 
     /**
+     * Ejecuta una instrucción SQL, previamente preparada/precomplidada,
+     * utilizando un PreparedStatement.
+     *
+     * @return
+     * @throws Exception
+     */
+    public Statement executeUpdate() throws Exception {
+        if (pstmt == null) {
+            throw new Exception("DBManager Error: se intenta ejecutar una query NO preparada/precompilada.");
+        }
+        pstmt.executeUpdate();
+        return pstmt;
+    }
+
+    /**
      * Precompila una instrucción SQL utilizando un PreparedStatement.
      *
      * @param query
@@ -381,18 +386,18 @@ public class Conexion {
     /**
      * Precompila una instrucción SQL utilizando un PreparedStatement.
      *
-     * @param statement
+     * @param query
      * @throws Exception
      */
-    public void prepareUpdate(String statement) throws Exception {
-        if (statement == null || statement.isEmpty()) {
+    public void prepareUpdate(String query) throws Exception {
+        if (query == null || query.isEmpty()) {
             throw new Exception("DBManager Error: instrucción incorrecta");
         }
 
-        pstmt = STATEMENTS.get(statement);
+        pstmt = STATEMENTS.get(query);
         if (pstmt == null) {
-            pstmt = cn.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS);
-            STATEMENTS.put(statement, pstmt);
+            pstmt = cn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            STATEMENTS.put(query, pstmt);
         }
     }
 
@@ -424,20 +429,6 @@ public class Conexion {
         return pstmt.executeQuery();
     }
 
-    /**
-     * Ejecuta una instrucción SQL, previamente preparada/precomplidada,
-     * utilizando un PreparedStatement.
-     *
-     * @return
-     * @throws Exception
-     */
-    public Statement executeUpdate() throws Exception {
-        if (pstmt == null) {
-            throw new Exception("DBManager Error: se intenta ejecutar una query NO preparada/precompilada.");
-        }
-        pstmt.executeUpdate();
-        return pstmt;
-    }
 
     /**
      * Setea un parámentro de tipo Integer de una instrucción SQL, previamente

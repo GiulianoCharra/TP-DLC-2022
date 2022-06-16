@@ -6,7 +6,7 @@ import org.utn.dlc.persistencia.PDocumento;
 import java.util.Date;
 import java.util.Hashtable;
 
-public class Documento{
+public class Documento {
 
     private int idDocumento;
     private String nombre;
@@ -27,21 +27,6 @@ public class Documento{
         this.fechaHoraActualizacion = fechaHoraActualizacion;
     }
 
-    public static Hashtable<Integer, Documento> buscarAllDocumentos() throws Exception {
-        return PDocumento.buscarAllDocumentos();
-    }
-
-    public static void insertarDocumento(Documento documento) {
-        PDocumento.insertarDocumento(documento);
-    }
-
-    public static void actualizarFechaDocumento(Documento documento) {
-        actualizarFechaDocumento(documento.getIdDocumento());
-    }
-
-    public static void actualizarFechaDocumento(int idDocumento, Date fechaUltimaActualizacion) {
-        PDocumento.actualizarDocumento(idDocumento);
-    }
 
     public int getIdDocumento() {
         return idDocumento;
@@ -75,10 +60,29 @@ public class Documento{
         this.fechaHoraActualizacion = fechaHoraActualizacion;
     }
 
-    public static Documento buscarByIdDocumento(int idDocumento){
-        return PDocumento.buscarByIdDocumento(idDocumento);
+    public static void insertarDocumento(Documento documento) {
+        PDocumento.insertarDocumento(documento);
     }
 
+    public static void actualizarFechaDocumento(Documento documento, long fechaHoraActualizacion) {
+        actualizarFechaDocumento(documento.getIdDocumento(), new Date(fechaHoraActualizacion));
+    }
+
+    public static void actualizarFechaDocumento(Documento documento, Date fechaHoraActualizacion) {
+        actualizarFechaDocumento(documento.getIdDocumento(), fechaHoraActualizacion);
+    }
+
+    public static void actualizarFechaDocumento(int idDocumento, Date fechaUltimaActualizacion) {
+        PDocumento.actualizarFechaDocumento(idDocumento, fechaUltimaActualizacion);
+    }
+
+    public static Hashtable<Integer, Documento> findAllDocuments() throws Exception {
+        return PDocumento.findAllDocuments();
+    }
+
+    public static Documento buscarByIdDocumento(int idDocumento) {
+        return PDocumento.buscarByIdDocumento(idDocumento);
+    }
 
     public boolean esActualizado(Documento documento) {
         return esActualizado(documento.getFechaHoraActualizacion());
@@ -90,7 +94,7 @@ public class Documento{
 
     @Override
     public String toString() {
-        return  "idDocumento: " + idDocumento +
+        return "idDocumento: " + idDocumento +
                 ", nombre: '" + nombre + '\'' +
                 ", path: '" + path + '\'' +
                 ", fechaHoraActualizacion: " + fechaHoraActualizacion;
