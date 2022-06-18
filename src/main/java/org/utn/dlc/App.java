@@ -37,7 +37,10 @@ public class App extends Application {
 
     public static void main(String[] args) throws Exception {
         String ruta = Objects.requireNonNull(App.class.getResource("documentos")).toURI().getPath();
+        long inicio = System.currentTimeMillis();
         Indexador.indexar(ruta);
+        long fin = System.currentTimeMillis();
+        System.out.println("Duracion indexacion: " + (double)(fin -inicio)/1000);
         launch();
     }
 
@@ -55,5 +58,4 @@ public class App extends Application {
         File f = directoryChooser.getSelectedFile();
         return f == null ? null : String.valueOf(f);
     }
-
 }
