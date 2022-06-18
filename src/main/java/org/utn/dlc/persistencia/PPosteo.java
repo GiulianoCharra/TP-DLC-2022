@@ -146,6 +146,8 @@ public abstract class PPosteo {
                     "WHERE [idVocabulario]=? and ,[idDocumento] = ?";
 
             PreparedStatement pstmt = con.prepareStatement(query);
+            con.setAutoCommit(false);
+            int i = 0;
             for (Vocabulario v : vocabulario.values()) {
                 pstmt.setInt(1, v.getMaxFrecuenciaPalabra());
                 double peso = 0;
@@ -158,10 +160,17 @@ public abstract class PPosteo {
                 pstmt.setInt(3, v.getIdPalabra());
                 pstmt.setInt(4, idDocumento);
                 pstmt.addBatch();
+
+                i++;
+                if (i == 100 || i == vocabulario.size())
+                {
+                    pstmt.executeBatch();
+                    i = 0;
+                }
             }
 
-            pstmt.executeBatch();
-
+            con.commit();
+            con.setAutoCommit(true);
             pstmt.close();
             con.close();
         } catch (Exception e) {
@@ -183,19 +192,24 @@ public abstract class PPosteo {
                     "(?,?,?,?)";
 
             PreparedStatement pstmt = con.prepareStatement(query);
-            posteos.forEach(p -> {
-                try {
-                    pstmt.setInt(1, p.getPalabra().getIdPalabra());
-                    pstmt.setInt(2, p.getDocumento().getIdDocumento());
-                    pstmt.setInt(3, p.getFrecuencia());
-                    pstmt.setFloat(4, (float) p.getPeso());
-                    pstmt.addBatch();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-            pstmt.executeBatch();
+            con.setAutoCommit(false);
+            int i = 0;
+            for (Posteo p : posteos) {
+                pstmt.setInt(1, p.getPalabra().getIdPalabra());
+                pstmt.setInt(2, p.getDocumento().getIdDocumento());
+                pstmt.setInt(3, p.getFrecuencia());
+                pstmt.setFloat(4, (float) p.getPeso());
+                pstmt.addBatch();
 
+                i++;
+                if (i == 100 || i == posteos.size()) {
+                    pstmt.executeBatch();
+                    i = 0;
+                }
+            }
+
+            con.commit();
+            con.setAutoCommit(true);
             pstmt.close();
             con.close();
 

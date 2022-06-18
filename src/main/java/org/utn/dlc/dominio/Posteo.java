@@ -37,7 +37,7 @@ public class Posteo {
         return PPosteo.buscarPosteos(palabras);
     }
 
-    public static void insertarPosteo(HashSet<Posteo> posteos) {
+    public static void insertarPosteos(HashSet<Posteo> posteos) {
         PPosteo.insertPosteos(posteos);
     }
 

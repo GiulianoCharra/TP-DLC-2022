@@ -84,15 +84,23 @@ public abstract class PVocabulario {
                     "(?,?,?,?)";
 
             PreparedStatement pstmt = con.prepareStatement(query);
+            con.setAutoCommit(false);
+            int i = 0;
             for (Vocabulario v : vocabulario.values()) {
                 pstmt.setInt(1, v.getIdPalabra());
                 pstmt.setString(2, v.getPalabra());
                 pstmt.setInt(3, v.getCantDocumentos());
                 pstmt.setInt(4, v.getMaxFrecuenciaPalabra());
                 pstmt.addBatch();
-            }
-            pstmt.executeBatch();
 
+                i++;
+                if (i == 100 || i == vocabulario.size()) {
+                    i = 0;
+                    pstmt.executeBatch();
+                }
+            }
+            con.commit();
+            con.setAutoCommit(true);
             pstmt.close();
             con.close();
 
@@ -111,15 +119,24 @@ public abstract class PVocabulario {
                     "WHERE [idPalabra] = ?";
 
             PreparedStatement pstmt = con.prepareStatement(query);
+            con.setAutoCommit(false);
+            int i = 0;
             for (Vocabulario v : vocabulario.values()) {
                 pstmt.setInt(1, v.getCantDocumentos());
                 pstmt.setInt(2, v.getMaxFrecuenciaPalabra());
                 pstmt.setInt(3, v.getIdPalabra());
                 pstmt.addBatch();
+
+                i++;
+                if (i == 100 || i == vocabulario.size()) {
+
+                    i = 0;
+                    pstmt.executeBatch();
+                }
             }
 
-            pstmt.executeBatch();
-
+            con.commit();
+            con.setAutoCommit(true);
             pstmt.close();
             con.close();
         } catch (Exception e) {
