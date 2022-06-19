@@ -13,7 +13,7 @@ public class Posteo {
     private int frecuencia;
     private double peso;
 
-    public Posteo(int idVocabulario, int idDocumento, int frecuencia, int peso) {
+    public Posteo(int idVocabulario, int idDocumento, int frecuencia, double peso) {
         this(Vocabulario.buscarByIdPalabra(idVocabulario), Documento.buscarByIdDocumento(idDocumento), frecuencia, peso);
     }
 
@@ -32,9 +32,9 @@ public class Posteo {
         this.peso = peso;
     }
 
-    public static ArrayList<Posteo> buscarPosteos(String[] palabras) throws Exception {
+    public static ArrayList<Posteo> buscarPosteosPorPalabra(String[] palabras) throws Exception {
 
-        return PPosteo.buscarPosteos(palabras);
+        return PPosteo.buscarPosteosPorPalabra(palabras);
     }
 
     public static void insertarPosteos(HashSet<Posteo> posteos) {

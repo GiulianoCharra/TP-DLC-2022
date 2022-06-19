@@ -9,12 +9,13 @@ public abstract class Buscador {
 
     public static ArrayList<Documento> buscar(String[] palabras) throws Exception {
 
-        ArrayList<Posteo> resultadosPosteos = Posteo.buscarPosteos(palabras);
-        ArrayList<Documento> resultadosDocumentos = new ArrayList<>();
+        ArrayList<Posteo> resultadosPosteos = Posteo.buscarPosteosPorPalabra(palabras);
 
-        for (Posteo res : resultadosPosteos) {
-            resultadosDocumentos.add(res.getDocumento());
+        ArrayList<Documento> resultadosDocumentos = new ArrayList<>();
+        for (Posteo p : resultadosPosteos) {
+            resultadosDocumentos.add(p.getDocumento());
         }
+
         return resultadosDocumentos;
     }
 }

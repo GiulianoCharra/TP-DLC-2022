@@ -17,7 +17,7 @@ public abstract class PPosteo {
 
     public static final String POSTEO_ID_VOCABULARIO = "idVocabulario";
     public static final String POSTEO_ID_DOCUMENTO = "idDocumento";
-    public static final String POSTEO_FRECUENCIA = "frecuencia";
+    public static final String POSTEO_FRECUENCIA = "frecPalabra";
     public static final String POSTEO_PESO = "peso";
 
 
@@ -46,7 +46,7 @@ public abstract class PPosteo {
                     rs.getInt(PPosteo.POSTEO_ID_VOCABULARIO),
                     rs.getInt(PPosteo.POSTEO_ID_DOCUMENTO),
                     rs.getInt(PPosteo.POSTEO_FRECUENCIA),
-                    rs.getInt(PPosteo.POSTEO_PESO)
+                    rs.getDouble(PPosteo.POSTEO_PESO)
             );
         }
         return posteo;
@@ -96,40 +96,35 @@ public abstract class PPosteo {
         return alumnos;
     }
 
-    public static ArrayList<Posteo> buscarPosteos(String[] palabras) throws Exception {
+    public static ArrayList<Posteo> buscarPosteosPorPalabra(String[] palabras) throws Exception {
 
-        Conexion con = new Conexion(Conexion.SQLSERVER_DRIVER_NAME);
-        Integer[] idPalabras = new Integer[palabras.length];
-        for (int i = 0; i < palabras.length; i++) {
-            idPalabras[i] = palabras[i].hashCode();
+        try {
+            Class.forName(Conexion.SQLSERVER_DRIVER_NAME);
+            Connection con = DriverManager.getConnection(Conexion.URL, Conexion.USER, Conexion.PASS);
+
+            String query = "SELECT * "+
+                    "FROM [dbo].[POSTEO] " +
+                    "WHERE [idVocabulario]=? " +
+                    "ORDER BY [frecPalabra] DESC ";
+
+            PreparedStatement pstmt = con.prepareStatement(query);
+            for (String p : palabras) {
+                pstmt.setInt(1, p.hashCode());
+                pstmt.addBatch();
+            }
+            ResultSet rs = pstmt.executeQuery();
+
+            ArrayList<Posteo> posteos = buildPosteos(rs);
+
+            rs.close();
+            pstmt.close();
+            con.close();
+
+            return posteos;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        con.connect();
-        String query = Conexion.buildSelectQuery(
-                "*",
-                "v_alumno",
-                idPalabras == null ? null : String.format("%s IN (?)", PPosteo.POSTEO_ID_VOCABULARIO),
-                null,
-                null,
-                String.format("%s, %s", PPosteo.POSTEO_ID_VOCABULARIO, PPosteo.POSTEO_ID_DOCUMENTO),
-                0,
-                0
-        );
-
-        con.prepareQuery(query);
-
-        int parameterIndex = 1;
-        if (idPalabras != null) {
-            con.setArray(parameterIndex++, "INTEGER", idPalabras);
-        }
-
-        ResultSet rs = con.executeQuery(query);
-        ArrayList<Posteo> posteos = buildPosteos(rs);
-
-        rs.close();
-        con.close();
-
-        return posteos;
+        return null;
     }
 
     public static Posteo buscarByIdVocabulario(int idVocabulario) {
@@ -142,8 +137,8 @@ public abstract class PPosteo {
             Connection con = DriverManager.getConnection(Conexion.URL, Conexion.USER, Conexion.PASS);
 
             String query = "UPDATE [dbo].[Posteo] " +
-                    "SET [frecPalabra] = ?, [peso] = ? " +
-                    "WHERE [idVocabulario]=? and ,[idDocumento] = ?";
+                           "SET [frecPalabra] = ?, [peso] = ? " +
+                           "WHERE [idVocabulario]=? and ,[idDocumento] = ?";
 
             PreparedStatement pstmt = con.prepareStatement(query);
             con.setAutoCommit(false);
@@ -162,11 +157,8 @@ public abstract class PPosteo {
                 pstmt.addBatch();
 
                 i++;
-                if (i == 100 || i == vocabulario.size())
-                {
+                if (i % 100 == 0 || i == vocabulario.size())
                     pstmt.executeBatch();
-                    i = 0;
-                }
             }
 
             con.commit();
@@ -198,14 +190,12 @@ public abstract class PPosteo {
                 pstmt.setInt(1, p.getPalabra().getIdPalabra());
                 pstmt.setInt(2, p.getDocumento().getIdDocumento());
                 pstmt.setInt(3, p.getFrecuencia());
-                pstmt.setFloat(4, (float) p.getPeso());
+                pstmt.setDouble(4, p.getPeso());
                 pstmt.addBatch();
 
                 i++;
-                if (i == 100 || i == posteos.size()) {
+                if (i % 100 == 0 || i == posteos.size())
                     pstmt.executeBatch();
-                    i = 0;
-                }
             }
 
             con.commit();

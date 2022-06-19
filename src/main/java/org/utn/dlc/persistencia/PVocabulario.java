@@ -1,9 +1,11 @@
 package org.utn.dlc.persistencia;
 
+import org.utn.dlc.dominio.Posteo;
 import org.utn.dlc.dominio.Vocabulario;
 import org.utn.dlc.soporte.Conexion;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Hashtable;
 
 public abstract class PVocabulario {
@@ -67,6 +69,29 @@ public abstract class PVocabulario {
     }
 
     public static Vocabulario buscarByIdPalabra(int idPalabra) {
+        try {
+            Class.forName(Conexion.SQLSERVER_DRIVER_NAME);
+            Connection con = DriverManager.getConnection(Conexion.URL, Conexion.USER, Conexion.PASS);
+
+            String query = "SELECT * "+
+                           "FROM [dbo].[Vocabulario] " +
+                           "WHERE [idPalabra]=? ";
+
+            PreparedStatement pstmt = con.prepareStatement(query);
+            pstmt.setInt(1, idPalabra);
+
+            ResultSet rs = pstmt.executeQuery();
+            Vocabulario vocabulario = buildWord(rs);
+
+            rs.close();
+            pstmt.close();
+            con.close();
+
+            return vocabulario;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -94,10 +119,8 @@ public abstract class PVocabulario {
                 pstmt.addBatch();
 
                 i++;
-                if (i == 100 || i == vocabulario.size()) {
-                    i = 0;
+                if (i % 100 == 0 || i == vocabulario.size())
                     pstmt.executeBatch();
-                }
             }
             con.commit();
             con.setAutoCommit(true);
@@ -128,11 +151,8 @@ public abstract class PVocabulario {
                 pstmt.addBatch();
 
                 i++;
-                if (i == 100 || i == vocabulario.size()) {
-
-                    i = 0;
+                if (i % 100 == 0 || i == vocabulario.size())
                     pstmt.executeBatch();
-                }
             }
 
             con.commit();

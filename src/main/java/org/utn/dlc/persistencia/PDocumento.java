@@ -1,6 +1,7 @@
 package org.utn.dlc.persistencia;
 
 import org.utn.dlc.dominio.Documento;
+import org.utn.dlc.dominio.Vocabulario;
 import org.utn.dlc.soporte.Conexion;
 
 import java.sql.*;
@@ -16,32 +17,30 @@ public abstract class PDocumento {
 
     public static Documento buscarByIdDocumento(int idDocumento) {
 
-        Documento documento = null;
         try {
-            Conexion con = new Conexion(Conexion.SQLSERVER_DRIVER_NAME);
+            Class.forName(Conexion.SQLSERVER_DRIVER_NAME);
+            Connection con = DriverManager.getConnection(Conexion.URL, Conexion.USER, Conexion.PASS);
 
-            con.connect();
-            String query = Conexion.buildSelectQuery(
-                    "*",
-                    "Documento",
-                    String.format(" %s", DOCUMENTO_ID_DOCUMENTO + "=" + idDocumento),
-                    null,
-                    null,
-                    null
-            );
+            String query = "SELECT * "+
+                           "FROM [dbo].[Documento] " +
+                           "WHERE [idDocumento]=? ";
 
-            con.prepareQuery(query);
+            PreparedStatement pstmt = con.prepareStatement(query);
+            pstmt.setInt(1, idDocumento);
 
-            ResultSet rs = con.executeQuery(query);
-            documento = buildDocumento(rs);
+            ResultSet rs = pstmt.executeQuery();
+            Documento documento = buildDocumento(rs);
 
             rs.close();
+            pstmt.close();
             con.close();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
 
-        return documento;
+            return documento;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     protected static Hashtable<Integer, Documento> buildDocumentos(ResultSet rs) throws Exception {

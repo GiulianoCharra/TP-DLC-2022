@@ -45,10 +45,8 @@ public abstract class Indexador implements Runnable {
         Scanner scanDocumentoActual;
         BufferedReader bfDoc;
         File carpeta = new File(ruta);
-        long ini;
         //Recorre cada documento ".txt" de la carpeta
         for (File file : Objects.requireNonNull(carpeta.listFiles((File pathname) -> pathname.getName().endsWith(".txt")))) {
-            ini =  System.currentTimeMillis();
             if (verificarExistenciaDocumento(file))
                 continue;
 
@@ -71,26 +69,21 @@ public abstract class Indexador implements Runnable {
             }
 
             //Se procese a realizar la insercion de las nuevas palabras
-            long vi = System.currentTimeMillis();
             Vocabulario.insertarPalabras(vocabularioParaInsertar);
-            long vf = System.currentTimeMillis();
-            System.out.println("Duracion insercion palabras: " + (vf-vi));
 
             //Se procese a realizar la insercion de los posteos
-            long pi = System.currentTimeMillis();
+            long ini = System.currentTimeMillis();
             Posteo.insertarPosteos(posteos);
-            long pf = System.currentTimeMillis();
-            System.out.println("Duracion insercion posteos: " + (pf-pi));
+            long fin = System.currentTimeMillis();
+            System.out.println("cant posteos: " + posteos.size());
+            System.out.println("Duracion insercion posteos: " + (fin - ini));
 
             //reinicio variables
             documentoActual = null;
-            vocabularioParaActualizar = new Hashtable<>();
-            vocabularioParaInsertar = new Hashtable<>();
-            posteos = new HashSet<>();
-            long fin = System.currentTimeMillis();
-            System.out.println("Duracion insercion: s-" + (double)(fin - ini)/1000);
-
-            vocabularioDocActual = new Hashtable<>();
+            vocabularioParaActualizar.clear();
+            vocabularioParaInsertar.clear();
+            vocabularioDocActual.clear();
+            posteos.clear();
         }
     }
 
@@ -101,7 +94,7 @@ public abstract class Indexador implements Runnable {
         String path = file.getPath();
         Timestamp fechaUltimaActualizacion = new Timestamp(file.lastModified());
 
-        System.out.println(nombre);
+        //System.out.println("\n" + nombre);
 
         //Verifica si el documentoActual ya se encuentra y si no lo esta se guarda
         documentoActual = documentos.get(idDocumento);
@@ -146,7 +139,7 @@ public abstract class Indexador implements Runnable {
         while (scan.hasNext()) {
             //Guardo la proxima palabra, previamente convirtiendola en minuscula
             palabra = scan.next().toLowerCase();
-            if (palabra.length()==0)
+            if (palabra.length()<=0)
                 continue;
             //System.out.println(palabra);
             //Obtengo el hashcode de la palabra actual
@@ -207,7 +200,7 @@ public abstract class Indexador implements Runnable {
             int idPalabra = palabraAux.getIdPalabra();
 
             //Busca si la palabra ya se encuentra en el vocabulario, si lo esta se verifica la frecuencia
-            // y si no se encuentra se guarda
+            //y si no se encuentra se guarda
             Vocabulario palabra = vocabulario.get(idPalabra);
             if (palabra != null) {
                 //Se incrementa en +1 la cantidad de documento en las que aparece
@@ -218,8 +211,9 @@ public abstract class Indexador implements Runnable {
                 maxFrecPalabra = palabra.getMaxFrecuenciaPalabra();
                 if (maxFrecPalabra < maxFrecPalabraAux) {
                     palabra.setMaxFrecuenciaPalabra(maxFrecPalabraAux);
-                    vocabularioParaActualizar.put(idPalabra, palabra);
                 }
+                //se agrega el documento para actualziar
+                vocabularioParaActualizar.put(idPalabra, palabra);
             } else {
                 vocabulario.put(idPalabra, palabraAux);
                 vocabularioParaInsertar.put(idPalabra, palabraAux);

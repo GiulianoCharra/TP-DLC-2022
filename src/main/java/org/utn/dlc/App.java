@@ -30,17 +30,35 @@ public class App extends Application {
         scene.setRoot(loadFXML(fxml));
     }
 
+    static void newScene(String fxml) throws IOException {
+        Scene newScene = new Scene(loadFXML(fxml), 640, 480);
+        createScene(newScene);
+    }
+    static void newScene(Parent root) throws IOException {
+        Scene newScene = new Scene(root, 640, 480);
+        createScene(newScene);
+    }
+
+    static void createScene(Scene scene)
+    {
+        Stage newStage = new Stage();
+        newStage.setScene(scene);
+        newStage.show();
+    }
+
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
         return fxmlLoader.load();
     }
 
+
+
     public static void main(String[] args) throws Exception {
         String ruta = Objects.requireNonNull(App.class.getResource("documentos")).toURI().getPath();
-        long inicio = System.currentTimeMillis();
+        //long inicio = System.currentTimeMillis();
         Indexador.indexar(ruta);
-        long fin = System.currentTimeMillis();
-        System.out.println("Duracion indexacion: " + (double)(fin -inicio)/1000);
+        //long fin = System.currentTimeMillis();
+        //System.out.println("Duracion indexacion: " + (double)(fin -inicio)/1000);
         launch();
     }
 
