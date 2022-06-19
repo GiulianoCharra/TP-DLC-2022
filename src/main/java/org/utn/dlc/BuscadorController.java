@@ -11,8 +11,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
 import org.utn.dlc.dominio.Documento;
 import org.utn.dlc.logica.Buscador;
 
@@ -37,7 +35,8 @@ public class BuscadorController implements Initializable {
     public Label lbl_cant_resultados;
 
     private ArrayList<Documento> resultados;
-    private int i = 0;
+    private int inicio = 0;
+    private int fin = 0;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -53,9 +52,6 @@ public class BuscadorController implements Initializable {
 
 
     public void buscar() throws Exception {
-
-        i = 0;
-
         if (txt_texto_ingresado.getText().trim().isEmpty())
             return;
         String[] palabras = txt_texto_ingresado.getText().split(" ");
@@ -64,7 +60,7 @@ public class BuscadorController implements Initializable {
 
         lbl_cant_resultados.setText("Resultados: " +  resultados.size());
         hb_resultados.getChildren().clear();
-        cargarResultados(i, 20);
+        cargarResultados(0, 20);
     }
 
     private void cargarResultados(int inicio, int fin){
@@ -75,6 +71,7 @@ public class BuscadorController implements Initializable {
         }
         else
             btn_siguiente.setDisable(false);
+
         if (inicio <= 0){
             inicio = 0;
             btn_anterior.setDisable(true);
@@ -90,7 +87,8 @@ public class BuscadorController implements Initializable {
                 e.printStackTrace();
             }
         }
-        i = fin;
+        this.inicio = inicio;
+        this.fin = fin;
     }
 
     public int cantResultados() {
@@ -171,10 +169,10 @@ public class BuscadorController implements Initializable {
     }
 
     public void mostrarSiguientesResultados(ActionEvent actionEvent) {
-        cargarResultados(i, i + 20);
+        cargarResultados(fin, fin + 20);
     }
 
     public void mostrarAnteriorerResultados(ActionEvent actionEvent) {
-        cargarResultados(i - 20, i);
+        cargarResultados(inicio - 20, inicio);
     }
 }
