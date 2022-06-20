@@ -5,7 +5,7 @@ import org.utn.dlc.dominio.Posteo;
 
 import java.util.ArrayList;
 
-public abstract class Buscador {
+public abstract class Buscador implements Runnable{
 
     public static ArrayList<Documento> buscar(String[] palabras) throws Exception {
 

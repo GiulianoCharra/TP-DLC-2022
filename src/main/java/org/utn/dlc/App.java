@@ -10,6 +10,8 @@ import org.utn.dlc.logica.Indexador;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.sql.SQLOutput;
 import java.util.Objects;
 
 /**
@@ -54,12 +56,25 @@ public class App extends Application {
 
 
     public static void main(String[] args) throws Exception {
-        String ruta = Objects.requireNonNull(App.class.getResource("documentos")).toURI().getPath();
-        //long inicio = System.currentTimeMillis();
-        Indexador.indexar(ruta);
-        //long fin = System.currentTimeMillis();
-        //System.out.println("Duracion indexacion: " + (double)(fin -inicio)/1000);
-        launch();
+        Thread indexar = new Thread(() -> {
+            String ruta;
+            try {
+                ruta = App.class.getResource("documentos").toURI().getPath();
+                while (true){
+                    System.out.println("Iniciando Indexado");
+                    Indexador.indexar(ruta);
+                    Thread.sleep(10000);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });Thread buscar = new Thread(() -> {
+            launch();
+        });
+
+
+        indexar.start();
+        buscar.start();
     }
 
     /**
@@ -68,7 +83,6 @@ public class App extends Application {
      * @return devuelve la ruta del directorio seleccionado
      */
     public static String cargarRuta() {
-
         JFileChooser directoryChooser = new JFileChooser();
         directoryChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);

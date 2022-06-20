@@ -16,6 +16,9 @@ public class Posteo {
     public Posteo(int idVocabulario, int idDocumento, int frecuencia, double peso) {
         this(Vocabulario.buscarByIdPalabra(idVocabulario), Documento.buscarByIdDocumento(idDocumento), frecuencia, peso);
     }
+    public Posteo(int idDocumento, int frecuencia, double peso) {
+        this(null, Documento.buscarByIdDocumento(idDocumento), frecuencia, peso);
+    }
 
     public Posteo(Vocabulario palabra, Documento documento) {
         this(palabra, documento, 1, 0);

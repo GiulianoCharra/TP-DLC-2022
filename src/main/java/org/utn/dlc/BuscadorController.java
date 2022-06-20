@@ -4,13 +4,16 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import org.utn.dlc.dominio.Documento;
 import org.utn.dlc.logica.Buscador;
 
@@ -21,9 +24,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.ResourceBundle;
-import java.util.Scanner;
+import java.util.*;
 
 public class BuscadorController implements Initializable {
 
@@ -33,13 +34,21 @@ public class BuscadorController implements Initializable {
     public Button btn_anterior;
     public Button btn_siguiente;
     public Label lbl_cant_resultados;
+    public ComboBox<Integer> cmb_cantidad_resultados_mostrar;
+    public Label lbl_desde_hasta;
 
     private ArrayList<Documento> resultados;
     private int inicio = 0;
     private int fin = 0;
+    private final ArrayList<Integer> cantMonstrar = new ArrayList<>(
+            Arrays.asList(10, 20, 40, 60, 80, 100));
+    private int cantResultadosMostrar;
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        cmb_cantidad_resultados_mostrar.getItems().addAll(cantMonstrar);
+        cmb_cantidad_resultados_mostrar.setValue(cantMonstrar.get(0));
 
         /*try {
             addResultado(hb_resultados, "pepe");
@@ -50,21 +59,33 @@ public class BuscadorController implements Initializable {
         }*/
     }
 
-
     public void buscar() throws Exception {
         if (txt_texto_ingresado.getText().trim().isEmpty())
             return;
+
+        //Guardo las palabras ingresadas
         String[] palabras = txt_texto_ingresado.getText().split(" ");
 
+
+        //Busco las palabras incresadas
         resultados = Buscador.buscar(palabras);
 
+        //Muesto la cantidad de resultados
         lbl_cant_resultados.setText("Resultados: " +  resultados.size());
-        hb_resultados.getChildren().clear();
-        cargarResultados(0, 20);
+
+        //Se habilita el combo que permite seleccionar la cantidad de resultados que se muestran a la vez
+        cmb_cantidad_resultados_mostrar.setDisable(false);
+
+        //Se muestran n resultados a la vez
+        cantResultadosMostrar = cmb_cantidad_resultados_mostrar.getValue();
+        cargarResultados(0, cantResultadosMostrar);
     }
 
     private void cargarResultados(int inicio, int fin){
+
+        //Borro los resultados anteriores
         hb_resultados.getChildren().clear();
+
         if (fin > cantResultados()){
             fin = cantResultados();
             btn_siguiente.setDisable(true);
@@ -82,11 +103,12 @@ public class BuscadorController implements Initializable {
         for (int i = inicio; i < fin; i++) {
             Documento documento = resultados.get(i);
             try {
-                addResultado(documento);
+                addResultado(i, documento);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
         }
+        lbl_desde_hasta.setText(inicio + " - " + fin);
         this.inicio = inicio;
         this.fin = fin;
     }
@@ -95,11 +117,13 @@ public class BuscadorController implements Initializable {
         return resultados.size();
     }
 
-    public void addResultado(Documento doc) throws URISyntaxException {
+    public void addResultado(int i, Documento doc) throws URISyntaxException {
 
         File file = new File(doc.getPath());
 
-        Hyperlink hl = new Hyperlink(doc.getNombre());
+        //Se crear el link al documento
+        Hyperlink hl = new Hyperlink((i+1) + "-" +doc.getNombre());
+        hl.setFont(Font.font(15));
         hl.setOnMouseClicked(event -> {
             try {
                 cargarDocumento(file);
@@ -107,18 +131,45 @@ public class BuscadorController implements Initializable {
                 e.printStackTrace();
             }
         });
+
+        //Se crear un separador
         Separator s = new Separator();
+        HBox.setHgrow(s, Priority.ALWAYS);
         s.setPadding(new Insets(10));
+
+        //Se crea la imagen para descargar
         ImageView imv = new ImageView(new Image(getClass().getResource("imagenes/download.png").toURI().toString()));
+        imv.setFitWidth(20);
+        imv.setFitHeight(20);
+        HBox.setMargin(imv,new Insets(0, 5, 0, 0));
         imv.setOnMouseClicked(event -> {
             descargarDocumento(file);
         });
+
+        //Se crean los Hbox
+        HBox izquierda = new HBox(hl);
+        HBox centro = new HBox(s);
+        HBox derecha = new HBox(imv);
+
+        izquierda.setAlignment(Pos.CENTER_LEFT);
+        centro.setAlignment(Pos.CENTER);
+        derecha.setAlignment(Pos.CENTER_RIGHT);
+
+        izquierda.minWidth(100);
+        HBox.setHgrow(izquierda, Priority.NEVER);
+
+        centro.minWidth(10);
+        HBox.setHgrow(centro, Priority.ALWAYS);
+
+        derecha.minWidth(100);
+        HBox.setHgrow(derecha, Priority.NEVER);
+
         hb_resultados.getChildren().addAll(
                 new Separator(),
                 new HBox(
-                        hl,
-                        s,
-                        imv
+                        izquierda,
+                        centro,
+                        derecha
                 )
         );
     }
@@ -169,10 +220,15 @@ public class BuscadorController implements Initializable {
     }
 
     public void mostrarSiguientesResultados(ActionEvent actionEvent) {
-        cargarResultados(fin, fin + 20);
+        cargarResultados(fin, fin + cantResultadosMostrar);
     }
 
     public void mostrarAnteriorerResultados(ActionEvent actionEvent) {
-        cargarResultados(inicio - 20, inicio);
+        cargarResultados(inicio - cantResultadosMostrar, inicio);
+    }
+
+    public void mostrarResultados(ActionEvent actionEvent) {
+        cantResultadosMostrar = cmb_cantidad_resultados_mostrar.getValue();
+        cargarResultados(0, cantResultadosMostrar);
     }
 }

@@ -94,8 +94,6 @@ public abstract class Indexador implements Runnable {
         String path = file.getPath();
         Timestamp fechaUltimaActualizacion = new Timestamp(file.lastModified());
 
-        //System.out.println("\n" + nombre);
-
         //Verifica si el documentoActual ya se encuentra y si no lo esta se guarda
         documentoActual = documentos.get(idDocumento);
         if (documentoActual != null) {
@@ -112,6 +110,7 @@ public abstract class Indexador implements Runnable {
                 return true;
             }
         } else {
+            System.out.println(nombre);
             //Como el documentoActual no se encontraba se crea un documentoActual con los
             //datos del archivo que se esta leyedo, lo agrego al vector y lo guarda en la DB
             documentoActual = new Documento(idDocumento, nombre, path, fechaUltimaActualizacion);

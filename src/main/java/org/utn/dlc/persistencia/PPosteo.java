@@ -4,10 +4,7 @@ import org.utn.dlc.dominio.Posteo;
 import org.utn.dlc.dominio.Vocabulario;
 import org.utn.dlc.soporte.Conexion;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -43,7 +40,6 @@ public abstract class PPosteo {
         Posteo posteo = null;
         if (rs.next()) {
             posteo = new Posteo(
-                    rs.getInt(PPosteo.POSTEO_ID_VOCABULARIO),
                     rs.getInt(PPosteo.POSTEO_ID_DOCUMENTO),
                     rs.getInt(PPosteo.POSTEO_FRECUENCIA),
                     rs.getDouble(PPosteo.POSTEO_PESO)
@@ -102,16 +98,28 @@ public abstract class PPosteo {
             Class.forName(Conexion.SQLSERVER_DRIVER_NAME);
             Connection con = DriverManager.getConnection(Conexion.URL, Conexion.USER, Conexion.PASS);
 
-            String query = "SELECT * "+
-                    "FROM [dbo].[POSTEO] " +
-                    "WHERE [idVocabulario]=? " +
-                    "ORDER BY [frecPalabra] DESC ";
-
-            PreparedStatement pstmt = con.prepareStatement(query);
-            for (String p : palabras) {
-                pstmt.setInt(1, p.hashCode());
-                pstmt.addBatch();
+            StringBuilder query = new StringBuilder();
+            query.append("SELECT " );
+            query.append("p.[idDocumento] " );
+            query.append(", SUM(p.[frecPalabra]) as frecPalabra" );
+            query.append(", SUM(p.[peso]) as peso ");
+            query.append("FROM [dbo].[POSTEO] p " );
+            query.append("WHERE p.[idVocabulario] IN(");
+            for (int i = 0; i < palabras.length; i++) {
+                query.append("?");
+                if (i+1 < palabras.length)
+                    query.append(",");
             }
+            query.append(") ");
+            query.append("GROUP BY p.[idDocumento] " );
+            query.append("ORDER BY SUM(p.[frecPalabra]) DESC ");
+
+            PreparedStatement pstmt = con.prepareStatement(query.toString());
+
+            for (int i = 1; i <= palabras.length; i++) {
+                pstmt.setInt(i, palabras[i-1].hashCode());
+            }
+
             ResultSet rs = pstmt.executeQuery();
 
             ArrayList<Posteo> posteos = buildPosteos(rs);
@@ -176,12 +184,12 @@ public abstract class PPosteo {
             Connection con = DriverManager.getConnection(Conexion.URL, Conexion.USER, Conexion.PASS);
 
             String query = "INSERT INTO [dbo].[Posteo](" +
-                    "[idVocabulario]," +
-                    "[idDocumento]," +
-                    "[frecPalabra]," +
-                    "[peso])" +
-                    "VALUES " +
-                    "(?,?,?,?)";
+                           "[idVocabulario]," +
+                           "[idDocumento]," +
+                           "[frecPalabra]," +
+                           "[peso])" +
+                           "VALUES " +
+                           "(?,?,?,?)";
 
             PreparedStatement pstmt = con.prepareStatement(query);
             con.setAutoCommit(false);
